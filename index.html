@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lineup Builder</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#ececec;
+    display:flex;
+    justify-content:center;
+    padding:20px;
+}
+
+.wrapper{
+    width:1100px;
+}
+
+.topbar{
+    background:#046c42;
+    color:white;
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:15px;
+}
+
+.topbar h1{
+    font-size:24px;
+}
+
+.controls{
+    display:flex;
+    gap:15px;
+    margin-bottom:15px;
+}
+
+select{
+    padding:10px;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+}
+
+.pitch{
+    position:relative;
+    width:100%;
+    height:1200px;
+    background:#08a05d;
+    border-radius:35px;
+    overflow:hidden;
+}
+
+/* Spielfeld-Linien */
+
+.pitch::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:0;
+    transform:translateX(-50%);
+    width:4px;
+    height:100%;
+    background:rgba(255,255,255,0.18);
+}
+
+.center-circle{
+    position:absolute;
+    width:160px;
+    height:160px;
+    border:4px solid rgba(255,255,255,0.18);
+    border-radius:50%;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+}
+
+.box-top,
+.box-bottom{
+    position:absolute;
+    width:300px;
+    height:160px;
+    border:4px solid rgba(255,255,255,0.18);
+    left:50%;
+    transform:translateX(-50%);
+}
+
+.box-top{
+    top:0;
+    border-top:none;
+}
+
+.box-bottom{
+    bottom:0;
+    border-bottom:none;
+}
+
+.player{
+    position:absolute;
+    width:90px;
+    height:90px;
+    transform:translate(-50%,-50%);
+    cursor:grab;
+}
+
+.circle{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    border:4px solid #65ff65;
+    background:#10b36d;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.plus{
+    position:absolute;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    border:none;
+    right:8px;
+    bottom:15px;
+    cursor:pointer;
+    font-size:20px;
+    background:white;
+    color:#0a8b54;
+    font-weight:bold;
+}
+
+.player-label{
+    text-align:center;
+    margin-top:4px;
+    color:white;
+    font-size:12px;
+    font-weight:bold;
+    text-shadow:0 0 3px black;
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+}
+
+.modal-content{
+    width:350px;
+    background:white;
+    padding:20px;
+    border-radius:20px;
+}
+
+.modal-content h2{
+    margin-bottom:15px;
+}
+
+.modal-content input{
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+}
+
+.modal-content button{
+    width:100%;
+    padding:12px;
+    border:none;
+    background:#08a05d;
+    color:white;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.modal-content button:hover{
+    background:#067f49;
+}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+<div class="topbar">
+<h1>Lineup Builder</h1>
+</div>
+
+<div class="controls">
+<select id="formationSelect">
+<option>4-3-3</option>
+<option>4-4-2</option>
+<option>4-2-3-1</option>
+<option>4-1-4-1</option>
+<option>3-5-2</option>
+<option>3-4-3</option>
+<option>5-3-2</option>
+<option>5-4-1</option>
+<option>3-4-2-1</option>
+</select>
+</div>
+
+<div class="pitch" id="pitch">
+
+<div class="center-circle"></div>
+<div class="box-top"></div>
+<div class="box-bottom"></div>
+
+</div>
+
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-content">
+
+<h2>Spieler bearbeiten</h2>
+
+<input id="playerName" placeholder="Name">
+
+<input id="playerNumber" placeholder="Rückennummer">
+
+<label>Trikotfarbe</label>
+<input type="color" id="playerColor" value="#2d7fff">
+
+<br><br>
+
+<button id="savePlayer">
+Fertig
+</button>
+
+</div>
+</div>
+
+<script>
+
+const pitch = document.getElementById("pitch");
+const formationSelect = document.getElementById("formationSelect");
+
+const formations = {
+
+"4-3-3":[
+[15,15],[50,15],[85,15],
+[20,40],[50,40],[80,40],
+[15,65],[38,65],[62,65],[85,65],
+[50,87]
+],
+
+"4-4-2":[
+[35,15],[65,15],
+[15,40],[38,40],[62,40],[85,40],
+[15,65],[38,65],[62,65],[85,65],
+[50,87]
+],
+
+"4-2-3-1":[
+[50,15],
+[20,30],[50,30],[80,30],
+[38,45],[62,45],
+[15,65],[38,65],[62,65],[85,65],
+[50,87]
+],
+
+"4-1-4-1":[
+[50,15],
+[15,35],[38,35],[62,35],[85,35],
+[50,50],
+[15,65],[38,65],[62,65],[85,65],
+[50,87]
+],
+
+"3-5-2":[
+[35,15],[65,15],
+[15,35],[32,35],[50,35],[68,35],[85,35],
+[20,65],[50,65],[80,65],
+[50,87]
+],
+
+"3-4-3":[
+[15,15],[50,15],[85,15],
+[20,35],[40,35],[60,35],[80,35],
+[20,65],[50,65],[80,65],
+[50,87]
+],
+
+"5-3-2":[
+[35,15],[65,15],
+[20,40],[50,40],[80,40],
+[10,65],[30,65],[50,65],[70,65],[90,65],
+[50,87]
+],
+
+"5-4-1":[
+[50,15],
+[15,40],[38,40],[62,40],[85,40],
+[10,65],[30,65],[50,65],[70,65],[90,65],
+[50,87]
+],
+
+"3-4-2-1":[
+[50,15],
+[35,30],[65,30],
+[15,45],[40,45],[60,45],[85,45],
+[20,65],[50,65],[80,65],
+[50,87]
+]
+
+};
+
+let selectedPlayer = null;
+
+function createPlayer(x,y,index){
+
+const player = document.createElement("div");
+player.className = "player";
+
+player.style.left = x + "%";
+player.style.top = y + "%";
+
+player.innerHTML = `
+<div class="circle">?</div>
+<button class="plus">+</button>
+<div class="player-label"></div>
+`;
+
+pitch.appendChild(player);
+
+enableDrag(player);
+
+player.querySelector(".plus").addEventListener("click",(e)=>{
+e.stopPropagation();
+
+selectedPlayer = player;
+
+document.getElementById("modal").style.display="flex";
+});
+}
+
+function renderFormation(name){
+
+pitch.querySelectorAll(".player").forEach(p=>p.remove());
+
+formations[name].forEach((pos,i)=>{
+createPlayer(pos[0],pos[1],i);
+});
+}
+
+formationSelect.addEventListener("change",()=>{
+renderFormation(formationSelect.value);
+});
+
+renderFormation("4-3-3");
+
+document.getElementById("savePlayer").addEventListener("click",()=>{
+
+if(!selectedPlayer) return;
+
+const name =
+document.getElementById("playerName").value;
+
+const number =
+document.getElementById("playerNumber").value;
+
+const color =
+document.getElementById("playerColor").value;
+
+const circle =
+selectedPlayer.querySelector(".circle");
+
+circle.style.background=color;
+circle.textContent=number || "";
+
+selectedPlayer.querySelector(".player-label")
+.textContent=name;
+
+document.getElementById("modal").style.display="none";
+
+document.getElementById("playerName").value="";
+document.getElementById("playerNumber").value="";
+});
+
+function enableDrag(el){
+
+let active=false;
+
+el.addEventListener("mousedown",(e)=>{
+
+active=true;
+
+});
+
+document.addEventListener("mouseup",()=>{
+active=false;
+});
+
+document.addEventListener("mousemove",(e)=>{
+
+if(!active) return;
+
+const rect=pitch.getBoundingClientRect();
+
+let x=e.clientX-rect.left;
+let y=e.clientY-rect.top;
+
+x=Math.max(30,Math.min(rect.width-30,x));
+y=Math.max(30,Math.min(rect.height-30,y));
+
+el.style.left=(x/rect.width*100)+"%";
+el.style.top=(y/rect.height*100)+"%";
+
+});
+}
+
+window.onclick=(e)=>{
+
+const modal=document.getElementById("modal");
+
+if(e.target===modal){
+modal.style.display="none";
+}
+
+};
+
+</script>
+
+</body>
+</html>
