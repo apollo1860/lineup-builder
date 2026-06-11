@@ -20,8 +20,10 @@ body{
     padding:20px;
 }
 
+/* RESPONSIVE WRAPPER */
 .wrapper{
-    width:1100px;
+    width:100%;
+    max-width:1100px;
 }
 
 .topbar{
@@ -49,17 +51,19 @@ select{
     font-size:16px;
 }
 
+/* RESPONSIVE PITCH */
 .pitch{
     position:relative;
     width:100%;
-    height:1200px;
+    height:85vh;
+    min-height:550px;
+    max-height:1200px;
     background:#08a05d;
     border-radius:35px;
     overflow:hidden;
 }
 
 /* Spielfeld-Linien */
-
 .pitch::before{
     content:"";
     position:absolute;
@@ -92,15 +96,8 @@ select{
     transform:translateX(-50%);
 }
 
-.box-top{
-    top:0;
-    border-top:none;
-}
-
-.box-bottom{
-    bottom:0;
-    border-bottom:none;
-}
+.box-top{ top:0; border-top:none; }
+.box-bottom{ bottom:0; border-bottom:none; }
 
 .player{
     position:absolute;
@@ -108,6 +105,7 @@ select{
     height:90px;
     transform:translate(-50%,-50%);
     cursor:grab;
+    touch-action:none;
 }
 
 .circle{
@@ -149,6 +147,7 @@ select{
     text-shadow:0 0 3px black;
 }
 
+/* MODAL */
 .modal{
     position:fixed;
     inset:0;
@@ -188,8 +187,91 @@ select{
 .modal-content button:hover{
     background:#067f49;
 }
+
+/* MOBILE OPTIMIERUNG */
+@media (max-width:768px){
+
+body{
+    padding:10px;
+}
+
+.topbar{
+    padding:15px;
+    border-radius:15px;
+}
+
+.topbar h1{
+    font-size:20px;
+    text-align:center;
+}
+
+.controls{
+    flex-direction:column;
+}
+
+select{
+    width:100%;
+}
+
+.pitch{
+    height:78vh;
+    min-height:520px;
+    border-radius:20px;
+}
+
+.player{
+    width:70px;
+    height:70px;
+}
+
+.circle{
+    width:55px;
+    height:55px;
+    font-size:14px;
+    border-width:3px;
+}
+
+.plus{
+    width:24px;
+    height:24px;
+    font-size:16px;
+    right:3px;
+    bottom:8px;
+}
+
+.player-label{
+    font-size:10px;
+    max-width:70px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.center-circle{
+    width:100px;
+    height:100px;
+}
+
+.box-top,
+.box-bottom{
+    width:180px;
+    height:90px;
+}
+
+.modal-content{
+    width:95%;
+    border-radius:15px;
+}
+
+.modal-content input{
+    font-size:16px;
+}
+
+}
+
 </style>
 </head>
+
 <body>
 
 <div class="wrapper">
@@ -213,11 +295,9 @@ select{
 </div>
 
 <div class="pitch" id="pitch">
-
 <div class="center-circle"></div>
 <div class="box-top"></div>
 <div class="box-bottom"></div>
-
 </div>
 
 </div>
@@ -228,7 +308,6 @@ select{
 <h2>Spieler bearbeiten</h2>
 
 <input id="playerName" placeholder="Name">
-
 <input id="playerNumber" placeholder="Rückennummer">
 
 <label>Trikotfarbe</label>
@@ -236,9 +315,7 @@ select{
 
 <br><br>
 
-<button id="savePlayer">
-Fertig
-</button>
+<button id="savePlayer">Fertig</button>
 
 </div>
 </div>
@@ -249,21 +326,18 @@ const pitch = document.getElementById("pitch");
 const formationSelect = document.getElementById("formationSelect");
 
 const formations = {
-
 "4-3-3":[
 [15,15],[50,15],[85,15],
 [20,40],[50,40],[80,40],
 [15,65],[38,65],[62,65],[85,65],
 [50,87]
 ],
-
 "4-4-2":[
 [35,15],[65,15],
 [15,40],[38,40],[62,40],[85,40],
 [15,65],[38,65],[62,65],[85,65],
 [50,87]
 ],
-
 "4-2-3-1":[
 [50,15],
 [20,30],[50,30],[80,30],
@@ -271,7 +345,6 @@ const formations = {
 [15,65],[38,65],[62,65],[85,65],
 [50,87]
 ],
-
 "4-1-4-1":[
 [50,15],
 [15,35],[38,35],[62,35],[85,35],
@@ -279,35 +352,30 @@ const formations = {
 [15,65],[38,65],[62,65],[85,65],
 [50,87]
 ],
-
 "3-5-2":[
 [35,15],[65,15],
 [15,35],[32,35],[50,35],[68,35],[85,35],
 [20,65],[50,65],[80,65],
 [50,87]
 ],
-
 "3-4-3":[
 [15,15],[50,15],[85,15],
 [20,35],[40,35],[60,35],[80,35],
 [20,65],[50,65],[80,65],
 [50,87]
 ],
-
 "5-3-2":[
 [35,15],[65,15],
 [20,40],[50,40],[80,40],
 [10,65],[30,65],[50,65],[70,65],[90,65],
 [50,87]
 ],
-
 "5-4-1":[
 [50,15],
 [15,40],[38,40],[62,40],[85,40],
 [10,65],[30,65],[50,65],[70,65],[90,65],
 [50,87]
 ],
-
 "3-4-2-1":[
 [50,15],
 [35,30],[65,30],
@@ -315,20 +383,18 @@ const formations = {
 [20,65],[50,65],[80,65],
 [50,87]
 ]
-
 };
 
 let selectedPlayer = null;
 
-function createPlayer(x,y,index){
-
+function createPlayer(x,y){
 const player = document.createElement("div");
-player.className = "player";
+player.className="player";
 
-player.style.left = x + "%";
-player.style.top = y + "%";
+player.style.left=x+"%";
+player.style.top=y+"%";
 
-player.innerHTML = `
+player.innerHTML=`
 <div class="circle">?</div>
 <button class="plus">+</button>
 <div class="player-label"></div>
@@ -340,20 +406,14 @@ enableDrag(player);
 
 player.querySelector(".plus").addEventListener("click",(e)=>{
 e.stopPropagation();
-
-selectedPlayer = player;
-
+selectedPlayer=player;
 document.getElementById("modal").style.display="flex";
 });
 }
 
 function renderFormation(name){
-
 pitch.querySelectorAll(".player").forEach(p=>p.remove());
-
-formations[name].forEach((pos,i)=>{
-createPlayer(pos[0],pos[1],i);
-});
+formations[name].forEach(pos=>createPlayer(pos[0],pos[1]));
 }
 
 formationSelect.addEventListener("change",()=>{
@@ -366,23 +426,13 @@ document.getElementById("savePlayer").addEventListener("click",()=>{
 
 if(!selectedPlayer) return;
 
-const name =
-document.getElementById("playerName").value;
+const name=document.getElementById("playerName").value;
+const number=document.getElementById("playerNumber").value;
+const color=document.getElementById("playerColor").value;
 
-const number =
-document.getElementById("playerNumber").value;
-
-const color =
-document.getElementById("playerColor").value;
-
-const circle =
-selectedPlayer.querySelector(".circle");
-
-circle.style.background=color;
-circle.textContent=number || "";
-
-selectedPlayer.querySelector(".player-label")
-.textContent=name;
+selectedPlayer.querySelector(".circle").style.background=color;
+selectedPlayer.querySelector(".circle").textContent=number||"";
+selectedPlayer.querySelector(".player-label").textContent=name;
 
 document.getElementById("modal").style.display="none";
 
@@ -394,43 +444,33 @@ function enableDrag(el){
 
 let active=false;
 
-el.addEventListener("mousedown",(e)=>{
-
-active=true;
-
-});
-
-document.addEventListener("mouseup",()=>{
-active=false;
-});
-
-document.addEventListener("mousemove",(e)=>{
-
-if(!active) return;
-
+function move(x,y){
 const rect=pitch.getBoundingClientRect();
 
-let x=e.clientX-rect.left;
-let y=e.clientY-rect.top;
-
-x=Math.max(30,Math.min(rect.width-30,x));
-y=Math.max(30,Math.min(rect.height-30,y));
+x=Math.max(30,Math.min(rect.width-30,x-rect.left));
+y=Math.max(30,Math.min(rect.height-30,y-rect.top));
 
 el.style.left=(x/rect.width*100)+"%";
 el.style.top=(y/rect.height*100)+"%";
+}
 
+el.addEventListener("mousedown",()=>active=true);
+document.addEventListener("mouseup",()=>active=false);
+
+document.addEventListener("mousemove",(e)=>{
+if(active) move(e.clientX,e.clientY);
 });
+
+el.addEventListener("touchstart",()=>active=true,{passive:false});
+document.addEventListener("touchend",()=>active=false);
+
+document.addEventListener("touchmove",(e)=>{
+if(!active) return;
+move(e.touches[0].clientX,e.touches[0].clientY);
+e.preventDefault();
+},{passive:false});
+
 }
-
-window.onclick=(e)=>{
-
-const modal=document.getElementById("modal");
-
-if(e.target===modal){
-modal.style.display="none";
-}
-
-};
 
 </script>
 
